@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        is-multidex="true"
+        jar="/Users/fmoyader/Documents/Android Course/PopularMovies/app/build/intermediates/incremental-runtime-classes/debug/instant-run.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="25.0.2"
+        sha1="c82741bc129dd5f99f11a4ab8666ae24262053b6">
+        <dex dex="/Users/fmoyader/Documents/Android Course/PopularMovies/app/build/intermediates/transforms/dex/debug/folders/1000/10000/instant-run_0623df4aae1659c825c4cfc13ad0294bfe0b2332/classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="/Users/fmoyader/Documents/Android Course/PopularMovies/app/build/intermediates/incremental-classes/debug/instant-run-bootstrap.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="25.0.2"
+        sha1="29e5cc23aacfe0700a7148062590d6573e1d7768">
+        <dex dex="/Users/fmoyader/Documents/Android Course/PopularMovies/app/build/intermediates/transforms/dex/debug/folders/1000/10000/instant-run-bootstrap_abd50a5c6b4388e3d1ed761553f5f4276bd81412/classes.dex" />
+    </item>
+
+</items>

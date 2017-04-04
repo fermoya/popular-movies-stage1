@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Popular Movies</string>
+    <string name="action_sort_by_rating">By rating</string>
+    <string name="action_sort_by_popularity">By popularity</string>
+    <string name="main_activity_title">Pop Movies</string>
+    <string name="detail_activity_title">Movie Detail</string>
+    <string name="no_internet_error_message">There\'s no Internet connection, please try again</string>
+    <string name="action_refresh">Refresh</string>
+</resources>
