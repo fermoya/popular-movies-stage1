@@ -1,5 +1,8 @@
 package com.example.fmoyader.popularmovies.dto;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
@@ -8,7 +11,7 @@ import java.io.Serializable;
  * Created by fmoyader on 30/3/17.
  */
 
-public class Movie implements Serializable {
+public class Movie implements Parcelable {
 
     @SerializedName("vote_average")
     private String rating;
@@ -47,6 +50,47 @@ public class Movie implements Serializable {
     private boolean video;
 
     private String popularity;
+
+    protected Movie(Parcel in) {
+        // Only these ones are the properties we need
+        rating = in.readString();
+        originalLanguage = in.readString();
+        originalTitle = in.readString();
+        releaseDate = in.readString();
+        synopsis = in.readString();
+        posterPath = in.readString();
+
+        backdropPath = in.readString();
+        adultsMovie = in.readByte() != 0;
+        id = in.readString();
+        genreIds = in.createStringArray();
+        voteCount = in.readString();
+        video = in.readByte() != 0;
+        popularity = in.readString();
+        title = in.readString();
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(rating);
+        dest.writeString(originalLanguage);
+        dest.writeString(originalTitle);
+        dest.writeString(releaseDate);
+        dest.writeString(synopsis);
+        dest.writeString(posterPath);
+    }
+
+    public static final Creator<Movie> CREATOR = new Creator<Movie>() {
+        @Override
+        public Movie createFromParcel(Parcel in) {
+            return new Movie(in);
+        }
+
+        @Override
+        public Movie[] newArray(int size) {
+            return new Movie[size];
+        }
+    };
 
     public String getPopularity() {
         return popularity;
@@ -104,4 +148,8 @@ public class Movie implements Serializable {
         return rating;
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
 }

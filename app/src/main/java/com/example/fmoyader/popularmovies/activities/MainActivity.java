@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.DisplayMetrics;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,18 +22,25 @@ import com.example.fmoyader.popularmovies.dto.Movie;
 import com.example.fmoyader.popularmovies.network.MovieDBNetworkHelper;
 import com.example.fmoyader.popularmovies.utils.PopularMoviesAdapter;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class MainActivity extends AppCompatActivity
         implements MovieDBNetworkHelper.MovieDBNetworkListener,
         PopularMoviesAdapter.EndOfListListener, PopularMoviesAdapter.RowListener {
 
-    public static final int ANIMATION_MILLIS = 2000;
-    private RecyclerView popularMoviesRecyclerView;
+    @BindView(R.id.rv_popular_movies_list)
+    RecyclerView popularMoviesRecyclerView;
+    @BindView(R.id.pb_loader)
+    ProgressBar progressBar;
+
     private PopularMoviesAdapter popularMoviesAdapter;
+    MovieSortOption sortOptionSelected;
     private MovieDBNetworkHelper movieDBNetworkHelper;
-    private ProgressBar progressBar;
     private Menu mainMenu;
     private long moviesPage;
-    MovieSortOption sortOptionSelected;
+
+    public static final int ANIMATION_MILLIS = 2000;
 
     public enum MovieSortOption {
         BY_POPULARITY,
@@ -43,15 +51,15 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
 
-        popularMoviesRecyclerView = (RecyclerView) findViewById(R.id.rv_popular_movies_list);
-        popularMoviesRecyclerView.setLayoutManager(new GridLayoutManager(this, 3));
+        //TODO: see the results of this suggested method
+        popularMoviesRecyclerView.setLayoutManager(new GridLayoutManager(this, numberOfColumns()));
         popularMoviesAdapter = new PopularMoviesAdapter(this, this, this);
         popularMoviesRecyclerView.setAdapter(popularMoviesAdapter);
 
         movieDBNetworkHelper = MovieDBNetworkHelper.getInstance();
         movieDBNetworkHelper.setMovieDBNetworkListener(this);
-        progressBar = (ProgressBar) findViewById(R.id.pb_loader);
         progressBar.setVisibility(View.VISIBLE);
 
         moviesPage = 1;
@@ -69,6 +77,17 @@ public class MainActivity extends AppCompatActivity
 
     private void startLoader() {
         popularMoviesRecyclerView.setVisibility(View.INVISIBLE);
+    }
+
+    private int numberOfColumns() {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        // You can change this divider to adjust the size of the poster
+        int widthDivider = 300;
+        int width = displayMetrics.widthPixels;
+        int nColumns = width / widthDivider;
+        if (nColumns < 2) return 2;
+        return nColumns;
     }
 
     private void hideLoader() {

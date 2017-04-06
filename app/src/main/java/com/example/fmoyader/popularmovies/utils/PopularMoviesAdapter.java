@@ -15,6 +15,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 /**
  * Created by fmoyader on 30/3/17.
  */
@@ -77,12 +80,13 @@ public class PopularMoviesAdapter
         private static final String BASE_URL = "http://image.tmdb.org/t/p/";
         private static final String SIZE = "w342";
 
-        private ImageView moviePosterImageView;
+        @BindView(R.id.iv_movie_poster)
+        ImageView moviePosterImageView;
 
         public MovieViewHolder(View view) {
             super(view);
             view.setOnClickListener(this);
-            moviePosterImageView = (ImageView) view.findViewById(R.id.iv_movie_poster);
+            ButterKnife.bind(this, view);
         }
 
         public void bind (Movie movie) {
