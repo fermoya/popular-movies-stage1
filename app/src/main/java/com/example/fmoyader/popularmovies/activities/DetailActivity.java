@@ -17,16 +17,25 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class DetailActivity extends AppCompatActivity {
 
     public static final String MOVIE_EXTRA = "Movie Selected";
 
-    private TextView movieOriginalTitleTextView;
-    private TextView movieReleaseDateTextView;
-    private TextView movieRatingTextView;
-    private TextView movieSynopsisTextView;
-    private TextView movieOriginalLanguage;
-    private ImageView movieThumbnailImageView;
+    @BindView(R.id.tv_movie_original_title)
+    TextView movieOriginalTitleTextView;
+    @BindView(R.id.tv_movie_release_date)
+    TextView movieReleaseDateTextView;
+    @BindView(R.id.tv_movie_rating)
+    TextView movieRatingTextView;
+    @BindView(R.id.tv_movie_synopsis)
+    TextView movieSynopsisTextView;
+    @BindView(R.id.tv_movie_original_language)
+    TextView movieOriginalLanguage;
+    @BindView(R.id.iv_movie_thumbnail)
+    ImageView movieThumbnailImageView;
 
     private static final String BASE_URL = "http://image.tmdb.org/t/p/";
     private static final String SIZE = "w500";
@@ -35,6 +44,7 @@ public class DetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
+        ButterKnife.bind(this);
 
         movieOriginalTitleTextView = (TextView) findViewById(R.id.tv_movie_original_title);
         movieReleaseDateTextView = (TextView) findViewById(R.id.tv_movie_release_date);
@@ -45,13 +55,18 @@ public class DetailActivity extends AppCompatActivity {
 
         Intent intentFromMainActivity = getIntent();
         if (intentFromMainActivity.hasExtra(MOVIE_EXTRA)) {
-            Movie movie = (Movie) intentFromMainActivity.getSerializableExtra(MOVIE_EXTRA);
+            Movie movie = (Movie) intentFromMainActivity.getParcelableExtra(MOVIE_EXTRA);
             movieOriginalTitleTextView.setText(movie.getOriginalTitle());
             movieReleaseDateTextView.setText(findLongFormattedReleaseDate(movie.getReleaseDate()));
             movieRatingTextView.setText(movie.getRating() + "/10");
             movieSynopsisTextView.setText(movie.getSynopsis());
             movieOriginalLanguage.setText(findLanguageLongName(movie.getOriginalLanguage()));
-            Picasso.with(this).load(BASE_URL + SIZE + movie.getPosterPath()).into(movieThumbnailImageView);
+            Picasso.with(this)
+                    .load(BASE_URL + SIZE + movie.getPosterPath())
+                    //Use of new images to control errors
+//                    .placeholder(R.drawable.user_placeholder)
+//                    .error(R.drawable.user_placeholder_error)
+                    .into(movieThumbnailImageView);
         }
 
         setTitle(getString(R.string.detail_activity_title));
