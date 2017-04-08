@@ -12,30 +12,21 @@
     </item>
     <item
         is-multidex="true"
-        jar="/Users/fmoyader/.android/build-cache/c1b2a146dfa9e6b62f3897217748924e81f23450/output/jars/classes.jar"
-        jumboMode="true"
-        optimize="true"
-        revision="25.0.2"
-        sha1="a07818a1ecabdb149998823429cce555af4b9cba">
-        <dex dex="/Users/fmoyader/Documents/Android Course/PopularMovies/app/build/intermediates/transforms/dex/debug/folders/1000/10/classes_537b34283fb583a47a985cfd61a98d23049dc954/classes.dex" />
-    </item>
-    <item
-        is-multidex="true"
-        jar="/Users/fmoyader/.gradle/caches/modules-2/files-2.1/com.jakewharton/butterknife-annotations/8.4.0/ea392375cf9ff59234a82e7928a204215ccc98cd/butterknife-annotations-8.4.0.jar"
-        jumboMode="true"
-        optimize="true"
-        revision="25.0.2"
-        sha1="ea392375cf9ff59234a82e7928a204215ccc98cd">
-        <dex dex="/Users/fmoyader/Documents/Android Course/PopularMovies/app/build/intermediates/transforms/dex/debug/folders/1000/10/butterknife-annotations-8.4.0_b452c6a2161d3d8c5695a1cff6d7cea6e8c3adeb/classes.dex" />
-    </item>
-    <item
-        is-multidex="true"
         jar="/Users/fmoyader/Documents/Android Course/PopularMovies/app/build/intermediates/incremental-classes/debug/instant-run-bootstrap.jar"
         jumboMode="true"
         optimize="true"
         revision="25.0.2"
-        sha1="29e5cc23aacfe0700a7148062590d6573e1d7768">
+        sha1="f0f403af7289ebb76cced94f56efa2c5ac8beb4b">
         <dex dex="/Users/fmoyader/Documents/Android Course/PopularMovies/app/build/intermediates/transforms/dex/debug/folders/1000/10000/instant-run-bootstrap_abd50a5c6b4388e3d1ed761553f5f4276bd81412/classes.dex" />
+    </item>
+    <item
+        is-multidex="true"
+        jar="/Users/fmoyader/.android/build-cache/3a6210b7118aae517106bc15c24936f927952aba/output/jars/classes.jar"
+        jumboMode="true"
+        optimize="true"
+        revision="25.0.2"
+        sha1="7d143337848b55ac01ff2b6ff316a61250eed2ed">
+        <dex dex="/Users/fmoyader/Documents/Android Course/PopularMovies/app/build/intermediates/transforms/dex/debug/folders/1000/10/classes_0988ed0cee52697d77bc0dfd50627d953206612e/classes.dex" />
     </item>
 
 </items>

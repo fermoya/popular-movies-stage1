@@ -10,17 +10,9 @@
         android:title="@string/action_refresh"/>
 
     <item
-        android:id="@+id/action_sort_by_popularity"
-        android:title="@string/action_sort_by_popularity"
+        android:id="@+id/action_settings"
+        android:title="@string/action_settings_title"
         android:orderInCategory="2"
-        android:enabled="false"
-        app:showAsAction="never" />
-
-    <item
-        android:id="@+id/action_sort_by_rating"
-        android:title="@string/action_sort_by_rating"
-        android:orderInCategory="3"
-        android:enabled="false"
         app:showAsAction="never" />
 
 </menu>

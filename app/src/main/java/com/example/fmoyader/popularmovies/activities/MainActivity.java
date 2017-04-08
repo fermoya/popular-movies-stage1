@@ -2,10 +2,12 @@ package com.example.fmoyader.popularmovies.activities;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
@@ -18,16 +20,17 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.example.fmoyader.popularmovies.R;
+import com.example.fmoyader.popularmovies.adapters.PopularMoviesAdapter;
 import com.example.fmoyader.popularmovies.dto.Movie;
-import com.example.fmoyader.popularmovies.network.MovieDBNetworkHelper;
-import com.example.fmoyader.popularmovies.utils.PopularMoviesAdapter;
+import com.example.fmoyader.popularmovies.network.online.MovieDBNetworkHelper;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity
         implements MovieDBNetworkHelper.MovieDBNetworkListener,
-        PopularMoviesAdapter.EndOfListListener, PopularMoviesAdapter.RowListener {
+        PopularMoviesAdapter.EndOfListListener, PopularMoviesAdapter.RowListener,
+        SharedPreferences.OnSharedPreferenceChangeListener {
 
     @BindView(R.id.rv_popular_movies_list)
     RecyclerView popularMoviesRecyclerView;
@@ -35,16 +38,15 @@ public class MainActivity extends AppCompatActivity
     ProgressBar progressBar;
 
     private PopularMoviesAdapter popularMoviesAdapter;
-    MovieSortOption sortOptionSelected;
+    private MovieSortingMode sortingMode;
     private MovieDBNetworkHelper movieDBNetworkHelper;
-    private Menu mainMenu;
-    private long moviesPage;
+    private long moviePage;
 
     public static final int ANIMATION_MILLIS = 2000;
 
-    public enum MovieSortOption {
-        BY_POPULARITY,
-        BY_RATING;
+    public enum MovieSortingMode {
+        POPULARITY,
+        RATING;
     }
 
     @Override
@@ -53,7 +55,6 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        //TODO: see the results of this suggested method
         popularMoviesRecyclerView.setLayoutManager(new GridLayoutManager(this, numberOfColumns()));
         popularMoviesAdapter = new PopularMoviesAdapter(this, this, this);
         popularMoviesRecyclerView.setAdapter(popularMoviesAdapter);
@@ -62,16 +63,39 @@ public class MainActivity extends AppCompatActivity
         movieDBNetworkHelper.setMovieDBNetworkListener(this);
         progressBar.setVisibility(View.VISIBLE);
 
-        moviesPage = 1;
-        sortOptionSelected = MovieSortOption.BY_POPULARITY;
+        moviePage = 1;
+        findMovieSortingMode();
 
         setTitle(getString(R.string.main_activity_title));
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
 
         if (isNetworkAvailable()) {
             fetchMovies();
         } else {
             Toast.makeText(this, getString(R.string.no_internet_error_message), Toast.LENGTH_SHORT).show();
             hideLoader();
+        }
+    }
+
+    private void findMovieSortingMode() {
+        sortingMode = MovieSortingMode.POPULARITY;
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String sortByOption = sharedPreferences.getString(
+                getString(R.string.pref_sort_by_list_key),
+                getString(R.string.action_sort_by_popularity)
+        );
+
+        updateMovieSortingMode(sortByOption);
+    }
+
+    private void updateMovieSortingMode(String sortByOption) {
+        if (sortByOption.equalsIgnoreCase(MovieSortingMode.POPULARITY.name())) {
+            sortingMode = MovieSortingMode.POPULARITY;
+        } else {
+            sortingMode = MovieSortingMode.RATING;
         }
     }
 
@@ -116,33 +140,25 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void fetchMovies() {
-        if (moviesPage == 1) {
+        if (moviePage == 1) {
             startLoader();
         }
 
-        if (sortOptionSelected == MovieSortOption.BY_POPULARITY) {
-            movieDBNetworkHelper.getPopularMovies(moviesPage);
+        if (sortingMode == MovieSortingMode.POPULARITY) {
+            movieDBNetworkHelper.requestPopularMovies(moviePage);
         } else {
-            movieDBNetworkHelper.getTopRatedMovies(moviesPage);
+            movieDBNetworkHelper.requestTopRatedMovies(moviePage);
         }
     }
 
     @Override
-    public void onResponse(Movie[] movies, long nextPage) {
+    public void onMoviesResponse(Movie[] movies, long nextPage) {
         popularMoviesAdapter.addMovies(movies);
-        if (moviesPage == 1) {
+        if (moviePage == 1) {
             hideLoader();
         }
 
-        enableMenuItems();
-        moviesPage = nextPage;
-    }
-
-    private void enableMenuItems() {
-        MenuItem sortByPopularityMenuItem = mainMenu.findItem(R.id.action_sort_by_popularity);
-        sortByPopularityMenuItem.setEnabled(true);
-        MenuItem sortByRatingMenuItem = mainMenu.findItem(R.id.action_sort_by_rating);
-        sortByRatingMenuItem.setEnabled(true);
+        moviePage = nextPage;
     }
 
     @Override
@@ -163,26 +179,15 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
-        mainMenu = menu;
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemId = item.getItemId();
-        if (itemId == R.id.action_sort_by_popularity) {
-            if (sortOptionSelected != MovieSortOption.BY_POPULARITY) {
-                sortOptionSelected = MovieSortOption.BY_POPULARITY;
-                resetMoviesList();
-                fetchMovies();
-            }
-            return true;
-        } else if (itemId == R.id.action_sort_by_rating) {
-            if (sortOptionSelected != MovieSortOption.BY_RATING) {
-                sortOptionSelected = MovieSortOption.BY_RATING;
-                resetMoviesList();
-                fetchMovies();
-            }
+        if (itemId == R.id.action_settings) {
+            Intent intentToSettingsActivity = new Intent(this, SettingsActivity.class);
+            startActivity(intentToSettingsActivity);
             return true;
         } else if (itemId == R.id.action_refresh) {
             if (isNetworkAvailable()) {
@@ -196,8 +201,29 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void resetMoviesList() {
-        moviesPage = 1;
+        moviePage = 1;
         popularMoviesAdapter = new PopularMoviesAdapter(this, this, this);
         popularMoviesRecyclerView.setAdapter(popularMoviesAdapter);
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (key == getString(R.string.pref_sort_by_list_key)) {
+            String sortByOption = sharedPreferences.getString(
+                    key,
+                    getString(R.string.action_sort_by_popularity)
+            );
+
+            updateMovieSortingMode(sortByOption);
+            resetMoviesList();
+            fetchMovies();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        sharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
     }
 }

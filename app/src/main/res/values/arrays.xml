@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <array name="pref_sort_by_list_entries">
+        <item>@string/pref_sort_by_popularity</item>
+        <item>@string/pref_sort_by_rating</item>
+    </array>
+
+    <array name="pref_sort_by_list_values">
+        <item>@string/pref_sort_by_popularity</item>
+        <item>@string/pref_sort_by_rating</item>
+    </array>
+
+</resources>
