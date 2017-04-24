@@ -16,38 +16,43 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.example.fmoyader.popularmovies.R;
-import com.example.fmoyader.popularmovies.adapters.PopularMoviesAdapter;
+import com.example.fmoyader.popularmovies.adapters.MovieSpinnerAdapter;
+import com.example.fmoyader.popularmovies.adapters.MoviesAdapter;
 import com.example.fmoyader.popularmovies.dto.Movie;
-import com.example.fmoyader.popularmovies.network.online.MovieDBNetworkHelper;
+import com.example.fmoyader.popularmovies.dto.MovieTrailer;
+import com.example.fmoyader.popularmovies.enums.MovieSortingMode;
+import com.example.fmoyader.popularmovies.network.MovieDispatcher;
+
+import java.util.Arrays;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity
-        implements MovieDBNetworkHelper.MovieDBNetworkListener,
-        PopularMoviesAdapter.EndOfListListener, PopularMoviesAdapter.RowListener,
-        SharedPreferences.OnSharedPreferenceChangeListener {
+        implements MovieDispatcher.MovieDispatcherListener,
+        MoviesAdapter.RowListener,
+        AdapterView.OnItemSelectedListener {
 
     @BindView(R.id.rv_popular_movies_list)
     RecyclerView popularMoviesRecyclerView;
     @BindView(R.id.pb_loader)
     ProgressBar progressBar;
+    @BindView(R.id.sp_sort_mode)
+    Spinner sortModeSpinner;
 
-    private PopularMoviesAdapter popularMoviesAdapter;
+    private MoviesAdapter popularMoviesAdapter;
     private MovieSortingMode sortingMode;
-    private MovieDBNetworkHelper movieDBNetworkHelper;
+    private MovieDispatcher movieDispatcher;
     private long moviePage;
 
     public static final int ANIMATION_MILLIS = 2000;
-
-    public enum MovieSortingMode {
-        POPULARITY,
-        RATING;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,12 +60,26 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        popularMoviesRecyclerView.setLayoutManager(new GridLayoutManager(this, numberOfColumns()));
-        popularMoviesAdapter = new PopularMoviesAdapter(this, this, this);
+        final GridLayoutManager layoutManager = new GridLayoutManager(this, numberOfColumns());
+        popularMoviesRecyclerView.setLayoutManager(layoutManager);
+        popularMoviesAdapter = new MoviesAdapter(this, this);
         popularMoviesRecyclerView.setAdapter(popularMoviesAdapter);
 
-        movieDBNetworkHelper = MovieDBNetworkHelper.getInstance();
-        movieDBNetworkHelper.setMovieDBNetworkListener(this);
+        popularMoviesRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                int visibleItemCount = layoutManager.getChildCount();
+                int totalItemCount = layoutManager.getItemCount();
+                int pastVisibleItems = layoutManager.findFirstVisibleItemPosition();
+                if (pastVisibleItems + visibleItemCount >= totalItemCount) {
+                    fetchMovies();
+                }
+            }
+        });
+
+        movieDispatcher = MovieDispatcher.getInstance();
+        movieDispatcher.initialize(this, this);
         progressBar.setVisibility(View.VISIBLE);
 
         moviePage = 1;
@@ -68,13 +87,29 @@ public class MainActivity extends AppCompatActivity
 
         setTitle(getString(R.string.main_activity_title));
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
-
         if (isNetworkAvailable()) {
             fetchMovies();
         } else {
             Toast.makeText(this, getString(R.string.no_internet_error_message), Toast.LENGTH_SHORT).show();
+            hideLoader();
+        }
+
+
+        ArrayAdapter<String> spinnerAdapter = new MovieSpinnerAdapter(
+                this,
+                R.layout.sorting_mode_spinner,
+                Arrays.asList(getResources().getStringArray(R.array.sp_entries))
+        );
+        spinnerAdapter.setDropDownViewResource(R.layout.sorting_mode_dropdown_spinner);
+        sortModeSpinner.setAdapter(spinnerAdapter);
+
+        sortModeSpinner.setOnItemSelectedListener(this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (popularMoviesAdapter.getItemCount() > 0) {
             hideLoader();
         }
     }
@@ -94,19 +129,21 @@ public class MainActivity extends AppCompatActivity
     private void updateMovieSortingMode(String sortByOption) {
         if (sortByOption.equalsIgnoreCase(MovieSortingMode.POPULARITY.name())) {
             sortingMode = MovieSortingMode.POPULARITY;
+            sortModeSpinner.setSelection(0);
         } else {
             sortingMode = MovieSortingMode.RATING;
+            sortModeSpinner.setSelection(1);
         }
     }
 
     private void startLoader() {
+        popularMoviesRecyclerView.setVisibility(View.INVISIBLE);
         popularMoviesRecyclerView.setVisibility(View.INVISIBLE);
     }
 
     private int numberOfColumns() {
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        // You can change this divider to adjust the size of the poster
         int widthDivider = 300;
         int width = displayMetrics.widthPixels;
         int nColumns = width / widthDivider;
@@ -130,6 +167,7 @@ public class MainActivity extends AppCompatActivity
         fadeIn.setFillEnabled(true);
         fadeIn.setRepeatMode(Animation.INFINITE);
         popularMoviesRecyclerView.startAnimation(fadeIn);
+        sortModeSpinner.startAnimation(fadeIn);
     }
 
     private boolean isNetworkAvailable() {
@@ -145,14 +183,18 @@ public class MainActivity extends AppCompatActivity
         }
 
         if (sortingMode == MovieSortingMode.POPULARITY) {
-            movieDBNetworkHelper.requestPopularMovies(moviePage);
+            movieDispatcher.requestPopularMovies(moviePage);
         } else {
-            movieDBNetworkHelper.requestTopRatedMovies(moviePage);
+            movieDispatcher.requestTopRatedMovies(moviePage);
         }
     }
 
     @Override
     public void onMoviesResponse(Movie[] movies, long nextPage) {
+        if (moviePage == nextPage) {
+            return;
+        }
+
         popularMoviesAdapter.addMovies(movies);
         if (moviePage == 1) {
             hideLoader();
@@ -162,12 +204,12 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onFailure() {  }
+    public void onMovieTrailersResponse(MovieTrailer[] movieTrailers) {
+
+    }
 
     @Override
-    public void onDispayLastElement() {
-        fetchMovies();
-    }
+    public void onFailure() {  }
 
     @Override
     public void onClick(Movie movie) {
@@ -202,28 +244,29 @@ public class MainActivity extends AppCompatActivity
 
     private void resetMoviesList() {
         moviePage = 1;
-        popularMoviesAdapter = new PopularMoviesAdapter(this, this, this);
+        popularMoviesAdapter = new MoviesAdapter(this, this);
         popularMoviesRecyclerView.setAdapter(popularMoviesAdapter);
     }
 
     @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key == getString(R.string.pref_sort_by_list_key)) {
-            String sortByOption = sharedPreferences.getString(
-                    key,
-                    getString(R.string.action_sort_by_popularity)
-            );
-
-            updateMovieSortingMode(sortByOption);
-            resetMoviesList();
-            fetchMovies();
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        switch (position) {
+            case 0:
+                sortingMode = MovieSortingMode.POPULARITY;
+                break;
+            case 1:
+                sortingMode = MovieSortingMode.RATING;
+                break;
+            case 2:
+            default:
+                sortingMode = MovieSortingMode.FAVOURITE;
+                break;
         }
+
+        resetMoviesList();
+        fetchMovies();
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        sharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
-    }
+    public void onNothingSelected(AdapterView<?> parent) { }
 }

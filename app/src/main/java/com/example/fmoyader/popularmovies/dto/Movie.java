@@ -16,15 +16,7 @@ public class Movie implements Parcelable {
     @SerializedName("vote_average")
     private String rating;
 
-    @SerializedName("backdrop_path")
-    private String backdropPath;
-
-    @SerializedName("adult")
-    private boolean adultsMovie;
-
     private String id;
-
-    private String title;
 
     @SerializedName("overview")
     private String synopsis;
@@ -32,24 +24,18 @@ public class Movie implements Parcelable {
     @SerializedName("original_language")
     private String originalLanguage;
 
-    @SerializedName("genre_ids")
-    private String[] genreIds;
-
     @SerializedName("release_date")
     private String releaseDate;
 
     @SerializedName("original_title")
     private String originalTitle;
 
-    @SerializedName("vote_count")
-    private String voteCount;
-
     @SerializedName("poster_path")
     private String posterPath;
 
-    private boolean video;
-
     private String popularity;
+
+    public Movie () {}
 
     protected Movie(Parcel in) {
         // Only these ones are the properties we need
@@ -59,15 +45,8 @@ public class Movie implements Parcelable {
         releaseDate = in.readString();
         synopsis = in.readString();
         posterPath = in.readString();
-
-        backdropPath = in.readString();
-        adultsMovie = in.readByte() != 0;
         id = in.readString();
-        genreIds = in.createStringArray();
-        voteCount = in.readString();
-        video = in.readByte() != 0;
         popularity = in.readString();
-        title = in.readString();
     }
 
     @Override
@@ -78,6 +57,8 @@ public class Movie implements Parcelable {
         dest.writeString(releaseDate);
         dest.writeString(synopsis);
         dest.writeString(posterPath);
+        dest.writeString(id);
+        dest.writeString(popularity);
     }
 
     public static final Creator<Movie> CREATOR = new Creator<Movie>() {
@@ -96,16 +77,8 @@ public class Movie implements Parcelable {
         return popularity;
     }
 
-    public boolean isVideo() {
-        return video;
-    }
-
     public String getPosterPath() {
         return posterPath;
-    }
-
-    public String getVoteCount() {
-        return voteCount;
     }
 
     public String getOriginalTitle() {
@@ -116,10 +89,6 @@ public class Movie implements Parcelable {
         return releaseDate;
     }
 
-    public String[] getGenreIds() {
-        return genreIds;
-    }
-
     public String getOriginalLanguage() {
         return originalLanguage;
     }
@@ -128,24 +97,44 @@ public class Movie implements Parcelable {
         return synopsis;
     }
 
-    public String getTitle() {
-        return title;
-    }
-
     public String getId() {
         return id;
     }
 
-    public boolean isAdultsMovie() {
-        return adultsMovie;
-    }
-
-    public String getBackdropPath() {
-        return backdropPath;
-    }
-
     public String getRating() {
         return rating;
+    }
+
+    public void setRating(String rating) {
+        this.rating = rating;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setSynopsis(String synopsis) {
+        this.synopsis = synopsis;
+    }
+
+    public void setOriginalLanguage(String originalLanguage) {
+        this.originalLanguage = originalLanguage;
+    }
+
+    public void setReleaseDate(String releaseDate) {
+        this.releaseDate = releaseDate;
+    }
+
+    public void setOriginalTitle(String originalTitle) {
+        this.originalTitle = originalTitle;
+    }
+
+    public void setPosterPath(String posterPath) {
+        this.posterPath = posterPath;
+    }
+
+    public void setPopularity(String popularity) {
+        this.popularity = popularity;
     }
 
     @Override

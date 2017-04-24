@@ -11,7 +11,8 @@
     <string name="pref_sort_by_list_key">pref_sort_by_list</string>
     <string name="pref_sort_by_popularity">Popularity</string>
     <string name="pref_sort_by_rating">Rating</string>
-    <string name="pref_sort_by_list_title">Sort by...</string>
+    <string name="pref_sort_by_favourite">Favourite</string>
+    <string name="pref_sort_by_list_title">Default Sorting Mode</string>
     <string name="action_settings_title">Settings</string>
 
 </resources>

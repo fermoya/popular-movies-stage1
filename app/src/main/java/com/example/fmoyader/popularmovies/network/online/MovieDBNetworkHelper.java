@@ -3,6 +3,8 @@ package com.example.fmoyader.popularmovies.network.online;
 import com.example.fmoyader.popularmovies.BuildConfig;
 import com.example.fmoyader.popularmovies.dto.Movie;
 import com.example.fmoyader.popularmovies.dto.MoviePage;
+import com.example.fmoyader.popularmovies.dto.MovieTrailer;
+import com.example.fmoyader.popularmovies.dto.MovieTrailerPage;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -19,15 +21,15 @@ public class MovieDBNetworkHelper {
     public interface MovieDBNetworkListener {
         void onMoviesResponse(Movie[] movies, long nextPage);
         //TODO: implement error message as a Toast
+        void onMovieTrailersResponse(MovieTrailer[] movieTrailers);
         void onFailure();
     }
 
     public static final String BASE_URL = "https://api.themoviedb.org/3/";
 
-    //TODO delete the key
     public String API_KEY;
 
-    private MovieDBService movieDBService;
+    private MovieDBRestInterface movieDBService;
 
     private static MovieDBNetworkHelper movieDBNetworkHelper;
 
@@ -44,7 +46,7 @@ public class MovieDBNetworkHelper {
                 .baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-        movieDBService = movieDB.create(MovieDBService.class);
+        movieDBService = movieDB.create(MovieDBRestInterface.class);
     }
 
     public synchronized static MovieDBNetworkHelper getInstance() {
@@ -113,11 +115,25 @@ public class MovieDBNetworkHelper {
     //TODO: review use of page
     //TODO: implements method
     public void requestMovieReviews(String movieId, long page) {
-        movieDBService.getMovieReviews(movieId, API_KEY, page);
+
     }
     //TODO: review use of page
     //TODO: implements method
-    public void requestMovieTrailers(String movieId, long page) {
-        movieDBService.getMovieTrailers(movieId, API_KEY, page);
+    public void requestMovieTrailers(String movieId) {
+        final Call<MovieTrailerPage> movieTrailersResponse =
+                movieDBService.getMovieTrailers(movieId, API_KEY);
+        movieTrailersResponse.enqueue(new Callback<MovieTrailerPage>() {
+            @Override
+            public void onResponse(Call<MovieTrailerPage> call, Response<MovieTrailerPage> response) {
+                MovieTrailerPage page = response.body();
+                MovieTrailer[] trailers = page.getTrailers();
+                movieDBNetworkListener.onMovieTrailersResponse(trailers);
+            }
+
+            @Override
+            public void onFailure(Call<MovieTrailerPage> call, Throwable t) {
+                movieDBNetworkListener.onFailure();
+            }
+        });
     }
 }

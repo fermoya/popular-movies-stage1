@@ -12,7 +12,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".activities.MainActivity">
+        <activity
+            android:name=".activities.MainActivity"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -26,12 +28,22 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activities.MainActivity" />
         </activity>
-        <activity android:name=".activities.SettingsActivity"
+        <activity
+            android:name=".activities.SettingsActivity"
             android:parentActivityName=".activities.MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activities.MainActivity" />
         </activity>
+
+        <provider
+            android:name=".network.offline.MovieDBProvider"
+            android:authorities="com.example.fmoyader.popularmovies"
+            android:exported="false" />
+
+        <service
+            android:name=".services.PersistMovieDataIntentService"
+            android:exported="false"></service>
     </application>
 
 </manifest>

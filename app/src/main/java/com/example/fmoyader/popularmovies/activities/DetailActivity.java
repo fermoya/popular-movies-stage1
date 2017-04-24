@@ -3,12 +3,17 @@ package com.example.fmoyader.popularmovies.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.fmoyader.popularmovies.R;
+import com.example.fmoyader.popularmovies.adapters.MovieTrailersAdapter;
 import com.example.fmoyader.popularmovies.dto.Movie;
+import com.example.fmoyader.popularmovies.dto.MovieTrailer;
+import com.example.fmoyader.popularmovies.network.MovieDispatcher;
 import com.squareup.picasso.Picasso;
 
 import java.text.DateFormat;
@@ -20,7 +25,7 @@ import java.util.Locale;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class DetailActivity extends AppCompatActivity {
+public class DetailActivity extends AppCompatActivity implements MovieDispatcher.MovieDispatcherListener{
 
     @BindView(R.id.tv_movie_original_title)
     TextView movieOriginalTitleTextView;
@@ -34,6 +39,10 @@ public class DetailActivity extends AppCompatActivity {
     TextView movieOriginalLanguage;
     @BindView(R.id.iv_movie_thumbnail)
     ImageView movieThumbnailImageView;
+    @BindView(R.id.rv_movie_trailers)
+    RecyclerView movieTrailersRecyclerView;
+    @BindView(R.id.rv_movie_reviews)
+    RecyclerView movieReviewsRecyclerView;
 
     // Paths to compose a URL and request movie poster
     private static final String BASE_URL = "http://image.tmdb.org/t/p/";
@@ -49,12 +58,15 @@ public class DetailActivity extends AppCompatActivity {
     private static final String MOVIE_SYNOPSIS_EXTRA = "movie synopsis";
     private static final String MOVIE_ORIGIAL_LANGUAGE_EXTRA = "movie original language";
     private static final String MOVIE_THUMBNAIL_URL_EXTRA = "movie thumnnail";
+
     private String posterUrlString;
+    private MovieTrailersAdapter movieTrailersAdapter;
+    private MovieDispatcher movieDispatcher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_detail);
+        setContentView(R.layout.activity_detail_contraint);
         ButterKnife.bind(this);
 
         movieOriginalTitleTextView = (TextView) findViewById(R.id.tv_movie_original_title);
@@ -64,17 +76,27 @@ public class DetailActivity extends AppCompatActivity {
         movieThumbnailImageView = (ImageView) findViewById(R.id.iv_movie_thumbnail);
         movieOriginalLanguage = (TextView) findViewById(R.id.tv_movie_original_language);
 
+        movieDispatcher = MovieDispatcher.getInstance();
+        movieDispatcher.initialize(this, this);
         if (savedInstanceState != null) {
             restoreViewValues(savedInstanceState);
         } else {
             Intent intentFromMainActivity = getIntent();
             if (intentFromMainActivity.hasExtra(MOVIE_EXTRA)) {
-                Movie movie = (Movie) intentFromMainActivity.getParcelableExtra(MOVIE_EXTRA);
+                Movie movie = intentFromMainActivity.getParcelableExtra(MOVIE_EXTRA);
                 fillViewValues(movie);
+                fetchTrailers(movie.getId());
             }
         }
 
+        movieTrailersRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+
         setTitle(getString(R.string.detail_activity_title));
+    }
+
+    private void fetchTrailers(String movieId) {
+        movieDispatcher.requestMovieTrailers(movieId);
     }
 
     private void restoreViewValues(Bundle savedInstanceState) {
@@ -110,7 +132,8 @@ public class DetailActivity extends AppCompatActivity {
                 .load(posterUrlString)
                 //Use of new images to control errors
 //                    .placeholder(R.drawable.user_placeholder)
-//                    .error(R.drawable.user_placeholder_error)
+                .placeholder(R.drawable.ic_timer_white_48dp)
+                .error(R.drawable.ic_error_white_48dp)
                 .into(movieThumbnailImageView);
     }
 
@@ -159,5 +182,21 @@ public class DetailActivity extends AppCompatActivity {
         outState.putString(MOVIE_SYNOPSIS_EXTRA, movieSynopsisTextView.getText().toString());
         outState.putString(MOVIE_THUMBNAIL_URL_EXTRA, posterUrlString);
         super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onMoviesResponse(Movie[] movies, long nextPage) {
+
+    }
+
+    @Override
+    public void onMovieTrailersResponse(MovieTrailer[] movieTrailers) {
+        movieTrailersAdapter = new MovieTrailersAdapter(this, movieTrailers);
+        movieTrailersRecyclerView.setAdapter(movieTrailersAdapter);
+    }
+
+    @Override
+    public void onFailure() {
+
     }
 }

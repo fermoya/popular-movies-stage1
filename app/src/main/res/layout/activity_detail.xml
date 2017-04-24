@@ -3,7 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="match_parent"
+    android:background="@color/colorPrimaryDark">
 
     <LinearLayout
         android:orientation="vertical"
@@ -15,8 +16,9 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_margin="20dp"
             android:orientation="vertical"
-            android:background="@color/pistachioGreen">
+            android:background="@color/colorAccent">
 
             <TextView
                 android:id="@+id/tv_movie_original_title"
@@ -25,7 +27,7 @@
                 android:layout_gravity="center_vertical"
                 android:layout_marginLeft="20dp"
                 android:padding="30dp"
-                android:textColor="@android:color/white"
+                android:textColor="@color/colorPrimaryDark"
                 android:textSize="35sp"
                 tools:text="Chappie" />
         </LinearLayout>
@@ -34,13 +36,15 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/colorPrimaryDark"
             android:weightSum="100">
 
             <ImageView
                 android:id="@+id/iv_movie_thumbnail"
                 android:padding="15dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:scaleType="fitXY"
+                android:layout_width="60dp"
+                android:layout_height="60dp" />
 
             <LinearLayout
                 android:orientation="vertical"
@@ -52,7 +56,7 @@
                 <TextView
                     android:id="@+id/tv_movie_release_date"
                     android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium"
-                    android:textColor="@android:color/black"
+                    android:textColor="@color/colorAccent"
                     android:textStyle="bold"
                     android:layout_marginTop="15dp"
                     android:layout_marginBottom="5dp"
@@ -64,7 +68,7 @@
                 <TextView
                     android:id="@+id/tv_movie_rating"
                     android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium"
-                    android:textColor="@color/lightGray"
+                    android:textColor="@color/colorPrimaryLight"
                     android:layout_marginLeft="15dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -72,6 +76,7 @@
 
                 <TextView
                     android:id="@+id/tv_movie_original_language"
+                    android:textColor="@color/colorAccent"
                     android:textAppearance="@style/Base.TextAppearance.AppCompat.Small"
                     android:layout_marginTop="35dp"
                     android:layout_marginLeft="15dp"
@@ -84,11 +89,13 @@
         </LinearLayout>
 
         <TextView
+            android:background="@color/colorPrimaryDark"
             android:id="@+id/tv_movie_synopsis"
             android:layout_margin="15dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textStyle="italic"
+            android:textColor="@color/colorAccent"
             tools:text="This is the description of the movie. Wow, it was awesome!!!!!!!!!!!"/>
     </LinearLayout>
 </ScrollView>

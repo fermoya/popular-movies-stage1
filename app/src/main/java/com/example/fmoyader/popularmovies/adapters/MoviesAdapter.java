@@ -6,9 +6,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.example.fmoyader.popularmovies.R;
 import com.example.fmoyader.popularmovies.dto.Movie;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -22,13 +24,12 @@ import butterknife.ButterKnife;
  * Created by fmoyader on 30/3/17.
  */
 
-public class PopularMoviesAdapter
-        extends RecyclerView.Adapter<PopularMoviesAdapter.MovieViewHolder>{
+public class MoviesAdapter
+        extends RecyclerView.Adapter<MoviesAdapter.MovieViewHolder>{
 
     private final Context context;
     private final List<Movie> movies;
-    private final EndOfListListener endOfListListener;
-    private final PopularMoviesAdapter.RowListener rowListener;
+    private final MoviesAdapter.RowListener rowListener;
 
     public interface EndOfListListener {
         void onDispayLastElement();
@@ -38,18 +39,16 @@ public class PopularMoviesAdapter
         void onClick(Movie movie);
     }
 
-    public PopularMoviesAdapter(
-            Context context, EndOfListListener endOfListListener,
-            RowListener rowListener) {
+    public MoviesAdapter(
+            Context context, RowListener rowListener) {
         this.movies = new ArrayList<>();
         this.context = context;
-        this.endOfListListener = endOfListListener;
         this.rowListener = rowListener;
     }
 
     @Override
     public MovieViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.popular_movie, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.movie_item, parent, false);
         return new MovieViewHolder(view);
     }
 
@@ -58,10 +57,6 @@ public class PopularMoviesAdapter
         if (movies != null && !movies.isEmpty()) {
             Movie movie = movies.get(position);
             holder.bind(movie);
-        }
-
-        if (position == movies.size() - 1) {
-            endOfListListener.onDispayLastElement();
         }
     }
 
@@ -83,14 +78,32 @@ public class PopularMoviesAdapter
         @BindView(R.id.iv_movie_poster)
         ImageView moviePosterImageView;
 
+        @BindView(R.id.tv_movie_title_connection_error)
+        TextView movieTitleTextView;
+
         public MovieViewHolder(View view) {
             super(view);
             view.setOnClickListener(this);
             ButterKnife.bind(this, view);
         }
 
-        public void bind (Movie movie) {
-            Picasso.with(context).load(BASE_URL + SIZE + movie.getPosterPath()).into(moviePosterImageView);
+        public void bind (final Movie movie) {
+            Picasso.with(context)
+                    .load(BASE_URL + SIZE + movie.getPosterPath())
+                    .into(moviePosterImageView, new Callback() {
+                        @Override
+                        public void onSuccess() {
+                            movieTitleTextView.setVisibility(View.GONE);
+                            moviePosterImageView.setVisibility(View.VISIBLE);
+                        }
+
+                        @Override
+                        public void onError() {
+                            moviePosterImageView.setVisibility(View.GONE);
+                            movieTitleTextView.setVisibility(View.VISIBLE);
+                            movieTitleTextView.setText(movie.getOriginalTitle());
+                        }
+                    });
         }
 
         @Override

@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.example.fmoyader.popularmovies.activities.MainActivity"
-    android:background="@android:color/black">
+    android:background="@color/colorPrimaryDark">
 
     <ProgressBar
         android:id="@+id/pb_loader"
@@ -12,9 +12,29 @@
         android:layout_height="60dp"
         android:layout_gravity="center_vertical|center_horizontal"/>
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/rv_popular_movies_list"
+
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <Spinner
+            android:layout_margin="15dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:id="@+id/sp_sort_mode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:background="@color/colorPrimary"
+            android:popupBackground="@color/colorPrimary"
+            android:entries="@array/sp_entries" />
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/rv_popular_movies_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
 
 </FrameLayout>
