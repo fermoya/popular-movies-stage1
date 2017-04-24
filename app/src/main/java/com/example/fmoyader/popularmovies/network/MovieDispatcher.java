@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.support.annotation.NonNull;
 
 import com.example.fmoyader.popularmovies.dto.Movie;
+import com.example.fmoyader.popularmovies.dto.MovieReview;
 import com.example.fmoyader.popularmovies.dto.MovieTrailer;
 import com.example.fmoyader.popularmovies.enums.MovieSortingMode;
 import com.example.fmoyader.popularmovies.network.offline.contract.MovieContract;
@@ -23,6 +24,7 @@ public class MovieDispatcher implements MovieDBNetworkHelper.MovieDBNetworkListe
     public interface MovieDispatcherListener {
         void onMoviesResponse(Movie[] movies, long nextPage);
         void onMovieTrailersResponse(MovieTrailer[] movieTrailers);
+        void onMovieReviewsResponse(MovieReview[] movieReviews, long nextPage);
         void onFailure();
     }
 
@@ -59,6 +61,9 @@ public class MovieDispatcher implements MovieDBNetworkHelper.MovieDBNetworkListe
 
     public void requestMovieTrailers(String movieId) {
         movieDBNetworkHelper.requestMovieTrailers(movieId);
+    }
+    public void requestMovieReviews(String movieId, long page) {
+        movieDBNetworkHelper.requestMovieReviews(movieId, page);
     }
 
     private void requestMovies(long page, MovieSortingMode mode) {
@@ -97,7 +102,7 @@ public class MovieDispatcher implements MovieDBNetworkHelper.MovieDBNetworkListe
                 null,
                 null,
                 null,
-                sortOrder + " DESC LIMIT 60 OFFSET 0"
+                sortOrder + " DESC LIMIT 20 OFFSET 0"
         );
 
         Movie[] movies = MovieSQLiteUtils.moviesCursorToMovieList(cursor);
@@ -116,6 +121,11 @@ public class MovieDispatcher implements MovieDBNetworkHelper.MovieDBNetworkListe
         intentToPersistDataMovieIntentService
                 .putExtra(PersistMovieDataIntentService.MOVIES_LIST_EXTRA, movies);
         context.startService(intentToPersistDataMovieIntentService);
+    }
+
+    @Override
+    public void onMovieReviewsResponse(MovieReview[] movieReviews, long nextPage) {
+        movieDispatcherListener.onMovieReviewsResponse(movieReviews, nextPage);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.example.fmoyader.popularmovies.network.online;
 
 import com.example.fmoyader.popularmovies.dto.MoviePage;
+import com.example.fmoyader.popularmovies.dto.MovieReviewPage;
 import com.example.fmoyader.popularmovies.dto.MovieTrailer;
 import com.example.fmoyader.popularmovies.dto.MovieTrailerPage;
 
@@ -23,9 +24,6 @@ public interface MovieDBRestInterface {
     @GET("movie/top_rated")
     Call<MoviePage> getTopRatedMovies(@Query("api_key") String appKey, @Query("page") long page);
 
-    //TODO: check if these two calls down here are paginated
-    //TODO: map the response into an object
-    //TODO: analyse use of POST requests to hide api_key query
     @GET("movie/{id}/videos")
     Call<MovieTrailerPage> getMovieTrailers(
             @Path("id") String movieId,
@@ -33,7 +31,7 @@ public interface MovieDBRestInterface {
     );
 
     @GET("movie/{id}/reviews")
-    Call<MoviePage> getMovieReviews(
+    Call<MovieReviewPage> getMovieReviews(
             @Path("id") String movieId,
             @Query("api_key") String appKey,
             @Query("page") long page

@@ -35,6 +35,8 @@ public class Movie implements Parcelable {
 
     private String popularity;
 
+    private boolean favourite;
+
     public Movie () {}
 
     protected Movie(Parcel in) {
@@ -140,5 +142,13 @@ public class Movie implements Parcelable {
     @Override
     public int describeContents() {
         return 0;
+    }
+
+    public boolean isFavourite() {
+        return favourite;
+    }
+
+    public void setFavourite(boolean favourite) {
+        this.favourite = favourite;
     }
 }

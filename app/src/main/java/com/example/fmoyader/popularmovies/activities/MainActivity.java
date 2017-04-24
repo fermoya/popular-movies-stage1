@@ -26,6 +26,7 @@ import com.example.fmoyader.popularmovies.R;
 import com.example.fmoyader.popularmovies.adapters.MovieSpinnerAdapter;
 import com.example.fmoyader.popularmovies.adapters.MoviesAdapter;
 import com.example.fmoyader.popularmovies.dto.Movie;
+import com.example.fmoyader.popularmovies.dto.MovieReview;
 import com.example.fmoyader.popularmovies.dto.MovieTrailer;
 import com.example.fmoyader.popularmovies.enums.MovieSortingMode;
 import com.example.fmoyader.popularmovies.network.MovieDispatcher;
@@ -205,6 +206,11 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onMovieTrailersResponse(MovieTrailer[] movieTrailers) {
+
+    }
+
+    @Override
+    public void onMovieReviewsResponse(MovieReview[] movieReviews, long nextPage) {
 
     }
 

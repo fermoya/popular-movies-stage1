@@ -2,16 +2,20 @@ package com.example.fmoyader.popularmovies.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.fmoyader.popularmovies.R;
+import com.example.fmoyader.popularmovies.adapters.MovieReviewsAdapter;
 import com.example.fmoyader.popularmovies.adapters.MovieTrailersAdapter;
 import com.example.fmoyader.popularmovies.dto.Movie;
+import com.example.fmoyader.popularmovies.dto.MovieReview;
 import com.example.fmoyader.popularmovies.dto.MovieTrailer;
 import com.example.fmoyader.popularmovies.network.MovieDispatcher;
 import com.squareup.picasso.Picasso;
@@ -43,6 +47,8 @@ public class DetailActivity extends AppCompatActivity implements MovieDispatcher
     RecyclerView movieTrailersRecyclerView;
     @BindView(R.id.rv_movie_reviews)
     RecyclerView movieReviewsRecyclerView;
+    @BindView(R.id.ib_favourite)
+    ImageButton movieFavouriteImageButton;
 
     // Paths to compose a URL and request movie poster
     private static final String BASE_URL = "http://image.tmdb.org/t/p/";
@@ -61,12 +67,16 @@ public class DetailActivity extends AppCompatActivity implements MovieDispatcher
 
     private String posterUrlString;
     private MovieTrailersAdapter movieTrailersAdapter;
+    private MovieReviewsAdapter movieReviewsAdapter;
     private MovieDispatcher movieDispatcher;
+
+    private Movie movie;
+    private long reviewPage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_detail_contraint);
+        setContentView(R.layout.activity_detail);
         ButterKnife.bind(this);
 
         movieOriginalTitleTextView = (TextView) findViewById(R.id.tv_movie_original_title);
@@ -83,20 +93,45 @@ public class DetailActivity extends AppCompatActivity implements MovieDispatcher
         } else {
             Intent intentFromMainActivity = getIntent();
             if (intentFromMainActivity.hasExtra(MOVIE_EXTRA)) {
-                Movie movie = intentFromMainActivity.getParcelableExtra(MOVIE_EXTRA);
+                movie = intentFromMainActivity.getParcelableExtra(MOVIE_EXTRA);
                 fillViewValues(movie);
-                fetchTrailers(movie.getId());
+                fetchTrailers();
+
+                reviewPage = 1;
+                fetchReviews();
             }
         }
 
         movieTrailersRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+        final LinearLayoutManager movieReviewsLayoutManager = new LinearLayoutManager(this);
+        movieReviewsRecyclerView.setLayoutManager(movieReviewsLayoutManager);
+        movieReviewsRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                int visibleItemCount = movieReviewsLayoutManager.getChildCount();
+                int totalItemCount = movieReviewsLayoutManager.getItemCount();
+                int pastVisibleItems = movieReviewsLayoutManager.findFirstVisibleItemPosition();
+                if (pastVisibleItems + visibleItemCount >= totalItemCount) {
+                    if (reviewPage > 0) {
+                        fetchReviews();
+                    }
+                }
+            }
+        });
+        movieReviewsAdapter = new MovieReviewsAdapter(null);
+        movieReviewsRecyclerView.setAdapter(movieReviewsAdapter);
 
         setTitle(getString(R.string.detail_activity_title));
     }
 
-    private void fetchTrailers(String movieId) {
-        movieDispatcher.requestMovieTrailers(movieId);
+    private void fetchReviews() {
+        movieDispatcher.requestMovieReviews(movie.getId(), reviewPage);
+    }
+
+    private void fetchTrailers() {
+        movieDispatcher.requestMovieTrailers(movie.getId());
     }
 
     private void restoreViewValues(Bundle savedInstanceState) {
@@ -196,7 +231,25 @@ public class DetailActivity extends AppCompatActivity implements MovieDispatcher
     }
 
     @Override
+    public void onMovieReviewsResponse(MovieReview[] movieReviews, long nextPage) {
+        reviewPage = nextPage;
+        movieReviewsAdapter.addReviews(movieReviews);
+    }
+
+    @Override
     public void onFailure() {
+
+    }
+
+    public void movieMarkedAsFavorite(View view) {
+        if (movie.isFavourite()) {
+            movieFavouriteImageButton.setImageResource(R.drawable.ic_stars_black_24dp);
+            movieFavouriteImageButton.setColorFilter(R.color.colorAccent);
+        } else {
+            movieFavouriteImageButton.setImageResource(R.drawable.ic_stars_white_24dp);
+            movieFavouriteImageButton.setColorFilter(R.color.colorPrimaryDark);
+        }
+        movie.setFavourite(!movie.isFavourite());
 
     }
 }

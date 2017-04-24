@@ -3,6 +3,8 @@ package com.example.fmoyader.popularmovies.network.online;
 import com.example.fmoyader.popularmovies.BuildConfig;
 import com.example.fmoyader.popularmovies.dto.Movie;
 import com.example.fmoyader.popularmovies.dto.MoviePage;
+import com.example.fmoyader.popularmovies.dto.MovieReview;
+import com.example.fmoyader.popularmovies.dto.MovieReviewPage;
 import com.example.fmoyader.popularmovies.dto.MovieTrailer;
 import com.example.fmoyader.popularmovies.dto.MovieTrailerPage;
 
@@ -20,7 +22,7 @@ public class MovieDBNetworkHelper {
 
     public interface MovieDBNetworkListener {
         void onMoviesResponse(Movie[] movies, long nextPage);
-        //TODO: implement error message as a Toast
+        void onMovieReviewsResponse(MovieReview[] movieReviews, long nextPage);
         void onMovieTrailersResponse(MovieTrailer[] movieTrailers);
         void onFailure();
     }
@@ -105,9 +107,15 @@ public class MovieDBNetworkHelper {
         });
     }
 
-    private long findNextPage(MoviePage moviePage) {
-        long currentPage = moviePage.getPage();
-        long totalPages = moviePage.getNumberOfPages();
+    private long findNextPage(MoviePage page) {
+        long currentPage = page.getPage();
+        long totalPages = page.getNumberOfPages();
+
+        return currentPage + 1 > totalPages ? 0 : currentPage + 1;
+    }
+    private long findNextPage(MovieReviewPage page) {
+        long currentPage = page.getPage();
+        long totalPages = page.getNumberOfPages();
 
         return currentPage + 1 > totalPages ? 0 : currentPage + 1;
     }
@@ -115,6 +123,23 @@ public class MovieDBNetworkHelper {
     //TODO: review use of page
     //TODO: implements method
     public void requestMovieReviews(String movieId, long page) {
+        Call<MovieReviewPage> movieReviewsResponse = movieDBService.getMovieReviews(movieId, API_KEY, page);
+
+        movieReviewsResponse.enqueue(new Callback<MovieReviewPage>() {
+            @Override
+            public void onResponse(Call<MovieReviewPage> call, Response<MovieReviewPage> response) {
+                MovieReviewPage movieReviewPage = response.body();
+                MovieReview[] movieReviews = movieReviewPage.getMovieReviews();
+
+                long nextPage = findNextPage(movieReviewPage);
+                movieDBNetworkListener.onMovieReviewsResponse(movieReviews, nextPage);
+            }
+
+            @Override
+            public void onFailure(Call<MovieReviewPage> call, Throwable t) {
+
+            }
+        });
 
     }
     //TODO: review use of page
