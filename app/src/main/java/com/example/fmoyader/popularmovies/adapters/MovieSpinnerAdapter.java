@@ -32,8 +32,7 @@ public class MovieSpinnerAdapter extends ArrayAdapter implements SpinnerAdapter 
 
     @Override
     public View getDropDownView(int position, View convertView, ViewGroup parent){
-        if (convertView == null)
-        {
+        if (convertView == null) {
             LayoutInflater vi = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = vi.inflate(R.layout.sorting_mode_dropdown_spinner, null);
         }
@@ -47,9 +46,12 @@ public class MovieSpinnerAdapter extends ArrayAdapter implements SpinnerAdapter 
                     0,
                     R.drawable.ic_keyboard_arrow_up_white_24dp,
                     0);
-        }
-        else{
-            textView.setHeight(100);
+        } else{
+            textView.setCompoundDrawablesWithIntrinsicBounds(
+                    0,
+                    0,
+                    0,
+                    0);
         }
 
         return convertView;

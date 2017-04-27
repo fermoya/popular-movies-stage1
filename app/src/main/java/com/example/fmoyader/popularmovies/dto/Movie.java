@@ -76,6 +76,9 @@ public class Movie implements Parcelable {
     };
 
     public String getPopularity() {
+        if (popularity != null) {
+            popularity = popularity.replaceAll(".", "");
+        }
         return popularity;
     }
 

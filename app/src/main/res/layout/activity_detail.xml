@@ -33,9 +33,9 @@
         <ImageView
             android:id="@+id/iv_movie_thumbnail"
             android:padding="15dp"
-            android:scaleType="fitXY"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:scaleType="centerCrop"
+            android:layout_width="150dp"
+            android:layout_height="100dp"
             android:layout_marginLeft="8dp"
             app:layout_constraintLeft_toLeftOf="@+id/tv_movie_original_title"
             android:layout_marginTop="22dp"
@@ -124,13 +124,12 @@
             android:layout_marginBottom="8dp" />
         
         <ImageButton
-            android:background="@color/colorPrimaryDark"
-            android:backgroundTint="@color/colorPrimaryDark"
+            android:backgroundTint="@color/colorPrimary"
             android:onClick="movieMarkedAsFavorite"
             android:id="@+id/ib_favourite"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:srcCompat="@drawable/ic_stars_white_24dp"
+            app:srcCompat="@drawable/ic_stars_black_24dp"
             app:layout_constraintBottom_toBottomOf="@+id/tv_movie_original_language"
             android:layout_marginBottom="0dp"
             android:layout_marginRight="24dp"

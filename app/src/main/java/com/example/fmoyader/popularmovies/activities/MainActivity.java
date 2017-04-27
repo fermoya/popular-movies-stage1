@@ -1,16 +1,20 @@
 package com.example.fmoyader.popularmovies.activities;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,7 +35,11 @@ import com.example.fmoyader.popularmovies.dto.MovieTrailer;
 import com.example.fmoyader.popularmovies.enums.MovieSortingMode;
 import com.example.fmoyader.popularmovies.network.MovieDispatcher;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -53,6 +61,11 @@ public class MainActivity extends AppCompatActivity
     private MovieDispatcher movieDispatcher;
     private long moviePage;
 
+    int count = 0;
+
+    private static final String MOVIE_PAGE_EXTRA = "movie_page";
+    private static final String MOVIE_LIST_EXTRA = "movie_list";
+    private static final String MOVIE_SORTING_MODE_EXTRA = "sorting_mode";
     public static final int ANIMATION_MILLIS = 2000;
 
     @Override
@@ -83,19 +96,6 @@ public class MainActivity extends AppCompatActivity
         movieDispatcher.initialize(this, this);
         progressBar.setVisibility(View.VISIBLE);
 
-        moviePage = 1;
-        findMovieSortingMode();
-
-        setTitle(getString(R.string.main_activity_title));
-
-        if (isNetworkAvailable()) {
-            fetchMovies();
-        } else {
-            Toast.makeText(this, getString(R.string.no_internet_error_message), Toast.LENGTH_SHORT).show();
-            hideLoader();
-        }
-
-
         ArrayAdapter<String> spinnerAdapter = new MovieSpinnerAdapter(
                 this,
                 R.layout.sorting_mode_spinner,
@@ -105,12 +105,41 @@ public class MainActivity extends AppCompatActivity
         sortModeSpinner.setAdapter(spinnerAdapter);
 
         sortModeSpinner.setOnItemSelectedListener(this);
+
+        if (savedInstanceState != null) {
+            moviePage = savedInstanceState.getLong(MOVIE_PAGE_EXTRA);
+            Movie[] movies = findMovies(savedInstanceState.getParcelableArray(MOVIE_LIST_EXTRA));
+            popularMoviesAdapter.addMovies(movies);
+            sortingMode = MovieSortingMode.valueOf(savedInstanceState.getString(MOVIE_SORTING_MODE_EXTRA));
+        } else {
+            moviePage = 1;
+            findMovieSortingMode();
+            Log.d("MODE", sortingMode.name());
+            fetchMovies();
+        }
+
+        setTitle(getString(R.string.main_activity_title));
+
+    }
+
+    private Movie[] findMovies(Parcelable[] parcelableMovies) {
+        Movie[] movies = new Movie[parcelableMovies.length];
+        for (int i = 0; i < parcelableMovies.length; i++) {
+            Movie movie = (Movie) parcelableMovies[i];
+            movies[i] = movie;
+        }
+        return movies;
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        movieDispatcher.initialize(this, this);
         if (popularMoviesAdapter.getItemCount() > 0) {
+            hideLoader();
+        }
+
+        if (popularMoviesAdapter.getItemCount() == 0 && sortingMode.equals(MovieSortingMode.FAVOURITE)) {
             hideLoader();
         }
     }
@@ -131,15 +160,18 @@ public class MainActivity extends AppCompatActivity
         if (sortByOption.equalsIgnoreCase(MovieSortingMode.POPULARITY.name())) {
             sortingMode = MovieSortingMode.POPULARITY;
             sortModeSpinner.setSelection(0);
-        } else {
+        } else if (sortByOption.equalsIgnoreCase(MovieSortingMode.RATING.name())) {
             sortingMode = MovieSortingMode.RATING;
             sortModeSpinner.setSelection(1);
+        } else if (sortByOption.equalsIgnoreCase(MovieSortingMode.FAVOURITE.name())){
+            sortingMode = MovieSortingMode.FAVOURITE;
+            sortModeSpinner.setSelection(2);
         }
     }
 
     private void startLoader() {
         popularMoviesRecyclerView.setVisibility(View.INVISIBLE);
-        popularMoviesRecyclerView.setVisibility(View.INVISIBLE);
+        sortModeSpinner.setVisibility(View.INVISIBLE);
     }
 
     private int numberOfColumns() {
@@ -171,13 +203,6 @@ public class MainActivity extends AppCompatActivity
         sortModeSpinner.startAnimation(fadeIn);
     }
 
-    private boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-    }
-
     private void fetchMovies() {
         if (moviePage == 1) {
             startLoader();
@@ -185,8 +210,10 @@ public class MainActivity extends AppCompatActivity
 
         if (sortingMode == MovieSortingMode.POPULARITY) {
             movieDispatcher.requestPopularMovies(moviePage);
-        } else {
+        } else if (sortingMode == MovieSortingMode.RATING){
             movieDispatcher.requestTopRatedMovies(moviePage);
+        } else if (sortingMode == MovieSortingMode.FAVOURITE){
+            movieDispatcher.requestFavouriteMovies();
         }
     }
 
@@ -196,7 +223,15 @@ public class MainActivity extends AppCompatActivity
             return;
         }
 
-        popularMoviesAdapter.addMovies(movies);
+        List<Movie> moviesNotRepeated = new ArrayList<>();
+        List<Movie> moviesDisplayed = Arrays.asList(popularMoviesAdapter.getItems());
+        for (Movie movie : movies) {
+            if (!moviesDisplayed.contains(movie)) {
+                moviesNotRepeated.add(movie);
+            }
+        }
+
+        popularMoviesAdapter.addMovies(moviesNotRepeated.toArray(new Movie[]{}));
         if (moviePage == 1) {
             hideLoader();
         }
@@ -205,17 +240,16 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onMovieTrailersResponse(MovieTrailer[] movieTrailers) {
-
-    }
+    public void onMovieTrailersResponse(MovieTrailer[] movieTrailers) { }
 
     @Override
-    public void onMovieReviewsResponse(MovieReview[] movieReviews, long nextPage) {
-
-    }
+    public void onMovieReviewsResponse(MovieReview[] movieReviews, long nextPage) { }
 
     @Override
-    public void onFailure() {  }
+    public void onFailure(String message) {
+        hideLoader();
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
 
     @Override
     public void onClick(Movie movie) {
@@ -238,12 +272,8 @@ public class MainActivity extends AppCompatActivity
             startActivity(intentToSettingsActivity);
             return true;
         } else if (itemId == R.id.action_refresh) {
-            if (isNetworkAvailable()) {
-                startLoader();
-                fetchMovies();
-            } else {
-                Toast.makeText(this, getString(R.string.no_internet_error_message), Toast.LENGTH_SHORT).show();
-            }
+            startLoader();
+            fetchMovies();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -256,6 +286,10 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        if (count == 0) {
+            count++;
+            return;
+        }
         switch (position) {
             case 0:
                 sortingMode = MovieSortingMode.POPULARITY;
@@ -275,4 +309,12 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onNothingSelected(AdapterView<?> parent) { }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putParcelableArray(MOVIE_LIST_EXTRA, popularMoviesAdapter.getItems());
+        outState.putLong(MOVIE_PAGE_EXTRA, moviePage);
+        outState.putString(MOVIE_SORTING_MODE_EXTRA, sortingMode.name());
+        super.onSaveInstanceState(outState);
+    }
 }

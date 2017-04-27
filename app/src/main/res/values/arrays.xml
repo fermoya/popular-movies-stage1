@@ -4,6 +4,7 @@
     <array name="pref_sort_by_list_entries">
         <item>@string/pref_sort_by_popularity</item>
         <item>@string/pref_sort_by_rating</item>
+        <item>@string/pref_sort_by_favourite</item>
     </array>
 
     <array name="pref_sort_by_list_values">

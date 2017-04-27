@@ -10,8 +10,11 @@ import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.example.fmoyader.popularmovies.network.offline.contract.MovieContract;
+import com.example.fmoyader.popularmovies.network.offline.contract.ReviewContract;
+import com.example.fmoyader.popularmovies.network.offline.contract.TrailerContract;
 
 /**
  * Created by fmoyader on 12/4/17.
@@ -24,6 +27,10 @@ public class MovieDBProvider extends ContentProvider {
 
     private static final int MOVIES = 100;
     private static final int MOVIES_WITH_ID = 101;
+    private static final int TRAILERS = 200;
+    private static final int TRAILERS_WITH_ID = 201;
+    private static final int REVIEWS = 300;
+    private static final int REVIEWS_WITH_ID = 301;
 
     @Override
     public boolean onCreate() {
@@ -34,7 +41,15 @@ public class MovieDBProvider extends ContentProvider {
     private static UriMatcher buildUriMatcher() {
         UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
         matcher.addURI(MovieContract.AUTHORITY, MovieContract.MOVIES_PATH, MOVIES);
+        matcher.addURI(MovieContract.AUTHORITY,
+                MovieContract.MOVIES_PATH + "/" + TrailerContract.TRAILER_PATH, TRAILERS);
         matcher.addURI(MovieContract.AUTHORITY, MovieContract.MOVIES_PATH + "/#", MOVIES_WITH_ID);
+        matcher.addURI(MovieContract.AUTHORITY,
+                MovieContract.MOVIES_PATH + "/" + TrailerContract.TRAILER_PATH + "/#", TRAILERS_WITH_ID);
+        matcher.addURI(MovieContract.AUTHORITY,
+                MovieContract.MOVIES_PATH + "/" + ReviewContract.REVIEW_PATH, REVIEWS);
+        matcher.addURI(MovieContract.AUTHORITY,
+                MovieContract.MOVIES_PATH + "/" + ReviewContract.REVIEW_PATH + "/#", REVIEWS_WITH_ID);
         return matcher;
     }
 
@@ -45,13 +60,39 @@ public class MovieDBProvider extends ContentProvider {
                         @Nullable String sortOrder) {
 
         SQLiteDatabase sqLiteDatabase = movieSQLiteHelper.getReadableDatabase();
-        Cursor cursor;
+        Cursor cursor = null;
 
         int match = uriMatcher.match(uri);
         switch (match) {
             case MOVIES:
+                try {
+                    cursor = sqLiteDatabase.query(
+                            MovieContract.MovieEntry.TABLE_NAME,
+                            projection,
+                            selection,
+                            selectionArgs,
+                            null,
+                            null,
+                            sortOrder
+                    );
+                } catch (SQLiteException e) {
+                    Log.d("ERROR", e.getMessage());
+                }
+                break;
+            case TRAILERS:
                 cursor = sqLiteDatabase.query(
-                        MovieContract.MovieEntry.TABLE_NAME,
+                        TrailerContract.TrailerEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            case REVIEWS:
+                cursor = sqLiteDatabase.query(
+                        ReviewContract.ReviewEntry.TABLE_NAME,
                         projection,
                         selection,
                         selectionArgs,
@@ -78,36 +119,10 @@ public class MovieDBProvider extends ContentProvider {
         return null;
     }
 
-    //TODO review if needed
     @Nullable
     @Override
     public Uri insert(@NonNull Uri uri, @Nullable ContentValues values) {
-        SQLiteDatabase sqLiteDatabase = movieSQLiteHelper.getWritableDatabase();
-        Uri returnUri;
-
-        int match = uriMatcher.match(uri);
-        switch (match) {
-            case MOVIES:
-                long id = sqLiteDatabase.insert(
-                        MovieContract.MovieEntry.TABLE_NAME,
-                        null,
-                        values
-                );
-
-                if (id < 0) {
-                    throw new SQLiteException("Failed inserting uri " + uri);
-                }
-
-                returnUri = ContentUris.withAppendedId(MovieContract.BASE_CONTENT_URI, id);
-                break;
-
-            default:
-                throw new UnsupportedOperationException("Unknown uri: " + uri);
-        }
-
-        getContext().getContentResolver().notifyChange(uri, null);
-
-        return returnUri;
+          throw new UnsupportedOperationException("Unsuported operation");
     }
 
     @Override
@@ -117,19 +132,27 @@ public class MovieDBProvider extends ContentProvider {
 
         int match = uriMatcher.match(uri);
         switch (match) {
-            case MOVIES_WITH_ID:
-                String id = uri.getLastPathSegment();
-                String whereClause = "_id = ?";
-                String[] whereArgs = new String[]{id};
-
+            case MOVIES:
                 numberOfRowsDeleted = sqLiteDatabase.delete(
                         MovieContract.MovieEntry.TABLE_NAME,
-                        whereClause,
-                        whereArgs
+                        null,
+                        null
                 );
-
                 break;
-
+            case TRAILERS:
+                numberOfRowsDeleted = sqLiteDatabase.delete(
+                        TrailerContract.TrailerEntry.TABLE_NAME,
+                        null,
+                        null
+                );
+                break;
+            case REVIEWS:
+                numberOfRowsDeleted = sqLiteDatabase.delete(
+                        ReviewContract.ReviewEntry.TABLE_NAME,
+                        null,
+                        null
+                );
+                break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
         }
@@ -148,16 +171,12 @@ public class MovieDBProvider extends ContentProvider {
 
         int match = uriMatcher.match(uri);
         switch (match) {
-            case MOVIES_WITH_ID:
-                String id = uri.getLastPathSegment();
-                String whereClause = "_id = ?";
-                String[] whereArgs = new String[]{id};
-
+            case MOVIES:
                 numberOfRowsUpdated = sqLiteDatabase.update(
                         MovieContract.MovieEntry.TABLE_NAME,
                         values,
-                        whereClause,
-                        whereArgs
+                        selection,
+                        selectionArgs
                 );
 
                 break;
@@ -188,6 +207,48 @@ public class MovieDBProvider extends ContentProvider {
                     for (ContentValues value : values) {
                         long id = sqLiteDatabase.insert(
                                 MovieContract.MovieEntry.TABLE_NAME,
+                                null,
+                                value
+                        );
+
+                        if (id > 0) {
+                            numberOfRowsInserted++;
+                        }
+                    }
+                    sqLiteDatabase.setTransactionSuccessful();
+                } finally {
+                    sqLiteDatabase.endTransaction();
+                }
+
+                break;
+            case TRAILERS:
+                sqLiteDatabase.beginTransaction();
+
+                try {
+                    for (ContentValues value : values) {
+                        long id = sqLiteDatabase.insert(
+                                TrailerContract.TrailerEntry.TABLE_NAME,
+                                null,
+                                value
+                        );
+
+                        if (id > 0) {
+                            numberOfRowsInserted++;
+                        }
+                    }
+                    sqLiteDatabase.setTransactionSuccessful();
+                } finally {
+                    sqLiteDatabase.endTransaction();
+                }
+
+                break;
+            case REVIEWS:
+                sqLiteDatabase.beginTransaction();
+
+                try {
+                    for (ContentValues value : values) {
+                        long id = sqLiteDatabase.insert(
+                                ReviewContract.ReviewEntry.TABLE_NAME,
                                 null,
                                 value
                         );

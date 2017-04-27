@@ -83,4 +83,8 @@ public class MovieReviewsAdapter extends RecyclerView.Adapter<MovieReviewsAdapte
             movieReviewTextView.setText(movieReview.getContent());
         }
     }
+
+    public MovieReview[] getItems(){
+        return movieReviews.toArray(new MovieReview[]{});
+    }
 }

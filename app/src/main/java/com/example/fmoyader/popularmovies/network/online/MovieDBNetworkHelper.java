@@ -67,6 +67,7 @@ public class MovieDBNetworkHelper {
             public void onResponse(Call<MoviePage> call, Response<MoviePage> response) {
                 if (movieDBNetworkListener != null) {
                     MoviePage moviePage = response.body();
+                    if (moviePage == null) return;
                     Movie[] movies = moviePage.getMovies();
                     long nextPage = findNextPage(moviePage);
                     movieDBNetworkListener.onMoviesResponse(movies, nextPage);
@@ -120,8 +121,6 @@ public class MovieDBNetworkHelper {
         return currentPage + 1 > totalPages ? 0 : currentPage + 1;
     }
 
-    //TODO: review use of page
-    //TODO: implements method
     public void requestMovieReviews(String movieId, long page) {
         Call<MovieReviewPage> movieReviewsResponse = movieDBService.getMovieReviews(movieId, API_KEY, page);
 
@@ -130,6 +129,10 @@ public class MovieDBNetworkHelper {
             public void onResponse(Call<MovieReviewPage> call, Response<MovieReviewPage> response) {
                 MovieReviewPage movieReviewPage = response.body();
                 MovieReview[] movieReviews = movieReviewPage.getMovieReviews();
+
+                for (MovieReview review : movieReviews) {
+                    review.setMovieId(movieReviewPage.getMovieId());
+                }
 
                 long nextPage = findNextPage(movieReviewPage);
                 movieDBNetworkListener.onMovieReviewsResponse(movieReviews, nextPage);
@@ -142,8 +145,7 @@ public class MovieDBNetworkHelper {
         });
 
     }
-    //TODO: review use of page
-    //TODO: implements method
+
     public void requestMovieTrailers(String movieId) {
         final Call<MovieTrailerPage> movieTrailersResponse =
                 movieDBService.getMovieTrailers(movieId, API_KEY);
@@ -152,6 +154,9 @@ public class MovieDBNetworkHelper {
             public void onResponse(Call<MovieTrailerPage> call, Response<MovieTrailerPage> response) {
                 MovieTrailerPage page = response.body();
                 MovieTrailer[] trailers = page.getTrailers();
+                for (MovieTrailer trailer : trailers) {
+                    trailer.setMovieId(page.getMovieId());
+                }
                 movieDBNetworkListener.onMovieTrailersResponse(trailers);
             }
 

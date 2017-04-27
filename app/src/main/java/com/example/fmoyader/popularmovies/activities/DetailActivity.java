@@ -1,8 +1,11 @@
 package com.example.fmoyader.popularmovies.activities;
 
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
+import android.os.Parcelable;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -18,6 +21,8 @@ import com.example.fmoyader.popularmovies.dto.Movie;
 import com.example.fmoyader.popularmovies.dto.MovieReview;
 import com.example.fmoyader.popularmovies.dto.MovieTrailer;
 import com.example.fmoyader.popularmovies.network.MovieDispatcher;
+import com.example.fmoyader.popularmovies.network.offline.contract.MovieContract;
+import com.example.fmoyader.popularmovies.utils.MovieSQLiteUtils;
 import com.squareup.picasso.Picasso;
 
 import java.text.DateFormat;
@@ -58,6 +63,8 @@ public class DetailActivity extends AppCompatActivity implements MovieDispatcher
     public static final String MOVIE_EXTRA = "Movie Selected";
 
     // Extras for save data when facing Activity recreation
+    private static final String REVIEW_LIST_EXTRA = "review_list";
+    private static final String TRAILER_LIST_EXTRA = "trailers_list";
     private static final String MOVIE_ORIGINAL_TITLE_EXTRA = "movie title";
     private static final String MOVIE_RELEASE_DATE_EXTRA = "movie release date";
     private static final String MOVIE_RATING_EXTRA = "movie rating";
@@ -88,19 +95,6 @@ public class DetailActivity extends AppCompatActivity implements MovieDispatcher
 
         movieDispatcher = MovieDispatcher.getInstance();
         movieDispatcher.initialize(this, this);
-        if (savedInstanceState != null) {
-            restoreViewValues(savedInstanceState);
-        } else {
-            Intent intentFromMainActivity = getIntent();
-            if (intentFromMainActivity.hasExtra(MOVIE_EXTRA)) {
-                movie = intentFromMainActivity.getParcelableExtra(MOVIE_EXTRA);
-                fillViewValues(movie);
-                fetchTrailers();
-
-                reviewPage = 1;
-                fetchReviews();
-            }
-        }
 
         movieTrailersRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -124,6 +118,43 @@ public class DetailActivity extends AppCompatActivity implements MovieDispatcher
         movieReviewsRecyclerView.setAdapter(movieReviewsAdapter);
 
         setTitle(getString(R.string.detail_activity_title));
+
+        if (savedInstanceState != null) {
+            MovieTrailer[] trailers = findTrailers(savedInstanceState.getParcelableArray(TRAILER_LIST_EXTRA));
+            MovieReview[] reviews = findReviews(savedInstanceState.getParcelableArray(REVIEW_LIST_EXTRA));
+            movieReviewsAdapter.addReviews(reviews);
+            movieTrailersAdapter = new MovieTrailersAdapter(this, trailers);
+            movieTrailersRecyclerView.setAdapter(movieTrailersAdapter);
+
+            movie = (Movie) savedInstanceState.getParcelable(MOVIE_EXTRA);
+
+            restoreViewValues(savedInstanceState);
+        } else {
+            Intent intentFromMainActivity = getIntent();
+            if (intentFromMainActivity.hasExtra(MOVIE_EXTRA)) {
+                movie = intentFromMainActivity.getParcelableExtra(MOVIE_EXTRA);
+
+                Cursor cursor = getContentResolver().query(
+                        MovieContract.MovieEntry.CONTENT_URI,
+                        null,
+                        MovieContract.MovieEntry.COLUMN_ID + " = ?",
+                        new String[]{movie.getId()},
+                        null
+                );
+                Movie[] movies = MovieSQLiteUtils.moviesCursorToMovieList(cursor);
+                if (cursor != null) cursor.close();
+                if (movies != null && movies.length > 0) {
+                    movie = movies[0];
+                }
+                updateFavouriteButton();
+
+                fillViewValues(movie);
+                fetchTrailers();
+
+                reviewPage = 1;
+                fetchReviews();
+            }
+        }
     }
 
     private void fetchReviews() {
@@ -216,6 +247,9 @@ public class DetailActivity extends AppCompatActivity implements MovieDispatcher
         outState.putString(MOVIE_RELEASE_DATE_EXTRA, movieRatingTextView.getText().toString());
         outState.putString(MOVIE_SYNOPSIS_EXTRA, movieSynopsisTextView.getText().toString());
         outState.putString(MOVIE_THUMBNAIL_URL_EXTRA, posterUrlString);
+        outState.putParcelableArray(REVIEW_LIST_EXTRA, movieReviewsAdapter.getItems());
+        outState.putParcelableArray(TRAILER_LIST_EXTRA, movieTrailersAdapter.getItems());
+        outState.putParcelable(MOVIE_EXTRA, movie);
         super.onSaveInstanceState(outState);
     }
 
@@ -237,19 +271,48 @@ public class DetailActivity extends AppCompatActivity implements MovieDispatcher
     }
 
     @Override
-    public void onFailure() {
+    public void onFailure(String string) {
 
     }
 
     public void movieMarkedAsFavorite(View view) {
-        if (movie.isFavourite()) {
-            movieFavouriteImageButton.setImageResource(R.drawable.ic_stars_black_24dp);
-            movieFavouriteImageButton.setColorFilter(R.color.colorAccent);
-        } else {
-            movieFavouriteImageButton.setImageResource(R.drawable.ic_stars_white_24dp);
-            movieFavouriteImageButton.setColorFilter(R.color.colorPrimaryDark);
-        }
         movie.setFavourite(!movie.isFavourite());
+        updateFavouriteButton();
 
+        ContentValues values = MovieSQLiteUtils.mapMovieToContentValues(movie);
+        getContentResolver().update(
+                MovieContract.MovieEntry.CONTENT_URI,
+                values,
+                MovieContract.MovieEntry.COLUMN_ID + " = ?",
+                new String[]{movie.getId()}
+        );
+    }
+
+    private void updateFavouriteButton() {
+        if (movie.isFavourite()) {
+            movieFavouriteImageButton.setImageResource(R.drawable.ic_stars_white_24dp);
+        } else {
+            movieFavouriteImageButton.setImageResource(R.drawable.ic_stars_black_24dp);
+        }
+    }
+
+    @NonNull
+    private MovieTrailer[] findTrailers(Parcelable[] parcelableTrailers) {
+        MovieTrailer[] trailers = new MovieTrailer[parcelableTrailers.length];
+        for (int i = 0; i < parcelableTrailers.length; i++) {
+            MovieTrailer trailer = (MovieTrailer) parcelableTrailers[i];
+            trailers[i] = trailer;
+        }
+        return trailers;
+    }
+
+    @NonNull
+    private MovieReview[] findReviews(Parcelable[] parcelableReviews) {
+        MovieReview[] reviews = new MovieReview[parcelableReviews.length];
+        for (int i = 0; i < parcelableReviews.length; i++) {
+            MovieReview review = (MovieReview) parcelableReviews[i];
+            reviews[i] = review;
+        }
+        return reviews;
     }
 }

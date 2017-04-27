@@ -77,4 +77,8 @@ public class MovieTrailersAdapter extends RecyclerView.Adapter<MovieTrailersAdap
             movieTrailerTitleTextView.setText(movieTrailer.getName());
         }
     }
+
+    public MovieTrailer[] getItems() {
+        return movieTrailers;
+    }
 }

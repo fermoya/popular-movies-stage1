@@ -24,10 +24,10 @@ public class MovieContract {
         public static final String COLUMN_RELEASE_DATE = "release_date";
         public static final String COLUMN_RATING = "rating";
         public static final String COLUMN_SYNOPSIS = "synopsis";
-        public static final String COLUMN_ORIGIAL_LANGUAGE = "original_language";
+        public static final String COLUMN_ORIGINAL_LANGUAGE = "original_language";
         public static final String COLUMN_POSTER_PATH = "poster_path";
         public static final String COLUMN_ID = "movie_id";
         public static final String COLUMN_POPULARITY = "popularity";
-
+        public static final String COLUMN_FAVOURITE = "favourite";
     }
 }

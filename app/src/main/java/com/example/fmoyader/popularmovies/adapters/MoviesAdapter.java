@@ -112,4 +112,8 @@ public class MoviesAdapter
         }
     }
 
+    public Movie[] getItems() {
+        return movies.toArray(new Movie[]{});
+    }
+
 }
