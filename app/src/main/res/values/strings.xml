@@ -7,4 +7,13 @@
     <string name="no_internet_error_message">There\'s no Internet connection, please try again</string>
     <string name="action_refresh">Refresh</string>
     <string name="poster_movie_content_description">Poster Movie</string>
+
+    <string name="pref_sort_by_list_key">pref_sort_by_list</string>
+    <string name="pref_sort_by_popularity">Popularity</string>
+    <string name="pref_sort_by_rating">Rating</string>
+    <string name="pref_sort_by_favourite">Favourite</string>
+    <string name="pref_sort_by_list_title">Default Sorting Mode</string>
+    <string name="action_settings_title">Settings</string>
+    <string name="no_results">There are no results</string>
+
 </resources>
